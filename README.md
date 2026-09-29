@@ -1,49 +1,49 @@
 # LINE Project Manager Bot
 
-一个可以部署到LINE群聊的轻量项目管理机器人。它使用确定性规则处理任务，不把普通聊天交给大模型，也不依赖任何特定行业或内容类型。
+Lightweight project management for LINE group chats. It uses deterministic task commands, ignores ordinary conversation, and is not tied to a specific industry.
 
-## 功能
+## Features
 
-- 验证LINE webhook的HMAC-SHA256签名
-- 限制允许使用机器人的群组和成员
-- 默认只处理真实`@机器人`的消息；无法提及时可使用自定义字母前缀
-- 创建、更新、完成、取消和查询通用任务
-- 使用SQLite保存任务、成员、事件和提醒记录
-- 任务创建者、负责人或管理员才能修改任务
-- 在截止日前一天中午提醒负责人
-- 优先使用Reply；只有定时提醒使用Push
-- 查询LINE月度用量并执行本地消息预算保护
-- 防止webhook重投和提醒重复发送
-- 提供systemd、Nginx、HTTPS和GitHub Actions示例
+- Verifies LINE webhook signatures with HMAC-SHA256
+- Restricts access to approved groups and members
+- Uses real bot mentions by default, with a configurable letter fallback
+- Creates, updates, completes, cancels, and lists generic tasks
+- Stores tasks, members, events, and reminders in SQLite
+- Allows only owners, creators, or administrators to modify tasks
+- Reminds owners at noon on the day before a deadline
+- Uses Reply for commands and Push only for scheduled reminders
+- Checks LINE monthly usage and enforces a local message budget
+- Deduplicates webhook deliveries and reminders
+- Includes systemd, Nginx, HTTPS, and GitHub Actions examples
 
-## 工作方式
+## How it works
 
 ```text
-LINE群消息
+LINE group message
   → HTTPS webhook
-  → 签名验证
-  → 群组和成员白名单
-  → @机器人门控（自定义字母备用）
-  → 确定性任务指令
+  → signature verification
+  → group and member allowlists
+  → real @bot mention (custom letter fallback)
+  → deterministic task command
   → SQLite
-  → 单条Reply
+  → one Reply
 
 systemd timer
-  → 检查明日到期任务
-  → 检查LINE用量与本地预算
-  → 单条Push并@负责人
+  → find tasks due tomorrow
+  → check LINE usage and local budget
+  → one Push mentioning the owner
 ```
 
-## 要求
+## Requirements
 
-- Python 3.11或更高版本
-- LINE Official Account及Messaging API channel
-- 一个公网HTTPS webhook地址
-- Linux部署时推荐systemd与Nginx
+- Python 3.11 or later
+- A LINE Official Account and Messaging API channel
+- A public HTTPS webhook URL
+- systemd and Nginx are recommended for Linux deployments
 
-运行代码只使用Python标准库。
+Runtime code uses only the Python standard library.
 
-## 快速验证
+## Quick start
 
 ```bash
 python3 -m venv .venv
@@ -52,16 +52,16 @@ python -m pip install .
 python -m unittest discover -s tests -v
 ```
 
-复制示例配置，但不要把填写真实ID后的文件提交到Git：
+Copy the example configuration. Never commit files containing real IDs:
 
 ```bash
 cp config/members.example.json config/members.json
 cp .env.example .env
 ```
 
-本项目不会自动读取`.env`。本地运行时请先把变量导入当前shell；systemd部署使用`EnvironmentFile`。
+The application does not load `.env` automatically. Export it into the current shell for local use; systemd uses `EnvironmentFile`.
 
-初始化数据库：
+Initialize the database:
 
 ```bash
 set -a
@@ -70,72 +70,76 @@ set +a
 line-project-init
 ```
 
-启动服务：
+Start the service:
 
 ```bash
 line-project-bot
 ```
 
-本地健康检查：
+Check local health:
 
 ```bash
 curl http://127.0.0.1:8646/healthz
 ```
 
-生产环境完整步骤见[部署指南](docs/部署指南.md)。
+See the [deployment guide](docs/deployment.md) for production instructions.
 
-如果还不知道群组ID和成员ID，请先按[LINE官方账号设置](docs/LINE官方账号设置.md)使用一次性引导模式。
+If you do not yet know the group and member IDs, follow the one-time bootstrap procedure in [LINE account setup](docs/line-account-setup.md).
 
-## 指令示例
-
-```text
-@机器人 新增任务“演示任务”，由我负责，截止10月15日
-@机器人 更新 TASK-0001，阶段改为审核
-@机器人 TASK-0001 已完成
-@机器人 取消 TASK-0001
-@机器人 查询当前任务
-```
-
-如果LINE客户端无法提及机器人，可通过`LINE_FALLBACK_TRIGGER_LETTER`设置一个备用字母。例如设置为`P`后，使用`P：查询当前任务`。备用前缀只在句首生效。
-
-完整说明见[任务指令](docs/任务指令.md)。
-
-## 项目结构
+## Command examples
 
 ```text
-config/       脱敏示例配置和Nginx模板
-docs/         LINE接入、指令与部署说明
-migrations/   可查看的SQLite结构
-src/          可安装Python包
-systemd/      webhook服务和提醒timer
-tests/        单元、集成、额度与隐私测试
+@Bot create task "Demo task", owner me, due 10-15
+@Bot update TASK-0001, stage review
+@Bot complete TASK-0001
+@Bot cancel TASK-0001
+@Bot list tasks
 ```
 
-## 隐私和安全
+If a LINE client cannot mention the bot, set `LINE_FALLBACK_TRIGGER_LETTER`. With `P`, for example, use `P: list tasks`. The fallback works only at the start of a message.
 
-仓库只包含虚构成员、任务和LINE标识符。以下内容不得提交：
+See [commands](docs/commands.md) for the full syntax.
 
-- Channel secret和access token
-- 真实用户ID、群组ID和聊天室ID
-- 生产数据库、事件记录和服务器日志
-- 真实聊天截图和项目资料
-- 私人域名、IP地址和账号路径
+## Project structure
 
-`.env`、`config/members.json`、数据库和日志已被`.gitignore`排除。更多信息见[SECURITY.md](SECURITY.md)。
+```text
+config/       sanitized examples and Nginx template
+docs/         LINE setup, commands, and deployment
+migrations/   inspectable SQLite schema
+src/          installable Python package
+systemd/      webhook service and reminder timer
+tests/        unit, integration, quota, and privacy tests
+```
 
-## 测试
+## Privacy and security
+
+The repository contains only fictional members, tasks, and LINE identifiers. Never commit:
+
+- Channel secrets or access tokens
+- Real user, group, or room IDs
+- Production databases, event records, or server logs
+- Real chat screenshots or project material
+- Private domains, IP addresses, or account paths
+
+`.env`, `config/members.json`, databases, and logs are excluded by `.gitignore`. See [SECURITY.md](SECURITY.md).
+
+## Tests
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
 python3 -W error::ResourceWarning -m unittest discover -s tests -v
 ```
 
-测试覆盖签名验证、消息门控、权限、任务生命周期、事件去重、提醒去重、额度保护、配置加载、打包schema和公开安全边界。
+Tests cover signature verification, message gating, permissions, task lifecycle, deduplication, quota protection, configuration, packaged schema, and public safety.
 
-## 当前版本
+## Language extensions
 
-当前版本为`0.1.0`。建议先在测试群和测试服务器验证，再用于实际项目群。
+English is bundled as the default locale. To add a language, create matching `parsers/<locale>.py` and `locales/<locale>.py` modules, add tests, then set `BOT_LOCALE=<locale>`. Core storage, permissions, reminders, and LINE integration do not need to change. See [adding a language](docs/adding-a-language.md).
 
-## 许可证
+## Status
 
-本项目采用[MIT License](LICENSE)。
+This project is currently `0.1.0`. Validate it in a test group and test server before production use.
+
+## License
+
+Licensed under the [MIT License](LICENSE).

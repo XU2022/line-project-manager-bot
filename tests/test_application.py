@@ -81,14 +81,14 @@ class ApplicationTest(unittest.TestCase):
         )
 
     def test_end_to_end_create_returns_one_reply(self) -> None:
-        body = webhook("H：新增任务“演示任务”，由我负责，截止10月15日")
+        body = webhook('H: create task "Demo task", owner me, due 10-15')
         replies = self.process(body)
         self.assertEqual(len(replies), 1)
         self.assertIn("TASK-0001", replies[0].text)
         self.assertEqual(len(self.service.list_tasks()), 1)
 
     def test_redelivery_does_not_repeat_operation_or_reply(self) -> None:
-        body = webhook("H：新增任务“演示任务”，由我负责")
+        body = webhook('H: create task "Demo task", owner me')
         self.assertEqual(len(self.process(body)), 1)
         self.assertEqual(self.process(body), [])
         self.assertEqual(len(self.service.list_tasks()), 1)
@@ -98,7 +98,7 @@ class ApplicationTest(unittest.TestCase):
 
     def test_structured_mention_reaches_command_processor(self) -> None:
         body = webhook(
-            "@ExampleBot 新增任务“演示任务”，由我负责",
+            '@ExampleBot create task "Demo task", owner me',
             event_id="mention-event",
             mention=True,
         )
@@ -114,7 +114,7 @@ class ApplicationTest(unittest.TestCase):
             channel_secret=SECRET,
             bootstrap_mode=True,
         )
-        body = webhook("H：身份", event_id="bootstrap-event")
+        body = webhook("H: identity", event_id="bootstrap-event")
         replies = bootstrap.process_webhook(
             body,
             webhook_signature(body, SECRET),

@@ -7,10 +7,11 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .application import BotApplication
-from .commands import CommandProcessor
+from .command_processor import CommandProcessor
 from .config import ConfigError, RuntimeConfig, load_members
 from .database import Database
 from .line_gateway import GateConfig, InvalidSignature, LineApiError, LineReplyClient
+from .language import load_language
 from .tracker import TaskService
 
 
@@ -41,9 +42,10 @@ def build_service(config: RuntimeConfig) -> WebhookService:
     task_service = TaskService(database, timezone=config.timezone)
     for member in members:
         task_service.register_member(member.member_id, member.display_name, member.roles)
+    parser, messages = load_language(config.bot_locale)
     application = BotApplication(
         database=database,
-        command_processor=CommandProcessor(task_service),
+        command_processor=CommandProcessor(task_service, parser=parser, messages=messages),
         gate_config=GateConfig.create(
             allowed_group_ids=config.allowed_group_ids,
             allowed_member_ids=(
@@ -54,6 +56,7 @@ def build_service(config: RuntimeConfig) -> WebhookService:
         channel_secret=config.channel_secret,
         timezone=config.timezone,
         bootstrap_mode=config.bootstrap_mode,
+        messages=messages,
     )
     return WebhookService(application, LineReplyClient(config.channel_access_token))
 

@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from line_project_manager.config import ConfigError, RuntimeConfig, load_members
+from line_project_manager.language import load_language
 from line_project_manager.server import WebhookService
 
 
@@ -25,6 +26,11 @@ class FakeReplyClient:
 
 
 class ConfigAndServerTest(unittest.TestCase):
+    def test_english_language_modules_load_together(self) -> None:
+        parser, messages = load_language("en")
+        self.assertEqual(parser.locale, "en")
+        self.assertEqual(messages.CREATED, "Task created.")
+
     def test_runtime_config_requires_all_secrets_and_paths(self) -> None:
         with self.assertRaises(ConfigError):
             RuntimeConfig.from_env({})
@@ -38,11 +44,13 @@ class ConfigAndServerTest(unittest.TestCase):
                 "MEMBER_CONFIG_PATH": "/tmp/example/members.json",
                 "LINE_PORT": "9000",
                 "LINE_FALLBACK_TRIGGER_LETTER": "p",
+                "BOT_LOCALE": "en",
             }
         )
         self.assertEqual(config.allowed_group_ids, ("C_EXAMPLE_ONE", "C_EXAMPLE_TWO"))
         self.assertEqual(config.port, 9000)
         self.assertEqual(config.fallback_trigger_letter, "P")
+        self.assertEqual(config.bot_locale, "en")
         self.assertNotIn("secret", repr(config))
         self.assertNotIn("token", repr(config))
 
@@ -53,7 +61,7 @@ class ConfigAndServerTest(unittest.TestCase):
             "LINE_ALLOWED_GROUPS": "C_EXAMPLE_GROUP",
             "PROJECT_DB_PATH": "/tmp/example/tasks.sqlite3",
             "MEMBER_CONFIG_PATH": "/tmp/example/members.json",
-            "LINE_FALLBACK_TRIGGER_LETTER": "任务",
+            "LINE_FALLBACK_TRIGGER_LETTER": "AB",
         }
         with self.assertRaises(ConfigError):
             RuntimeConfig.from_env(base)

@@ -32,7 +32,7 @@ class CommandProcessorTest(unittest.TestCase):
         return self.processor.handle(text, actor_id=actor, reference=self.reference)
 
     def test_create_for_self_with_due_date(self) -> None:
-        result = self.handle("新增任务“演示任务”，由我负责，截止10月15日")
+        result = self.handle('create task "Demo task", owner me, due 10-15')
         self.assertTrue(result.handled)
         self.assertIn("TASK-0001", result.text)
         task = self.service.get_task("TASK-0001")
@@ -40,19 +40,19 @@ class CommandProcessorTest(unittest.TestCase):
         self.assertEqual(task["due_at"], "2026-10-15T18:00:00+09:00")
 
     def test_create_without_comma_stops_name_before_owner(self) -> None:
-        result = self.handle("新增任务“演示任务”由我负责")
+        result = self.handle('create task "Demo task" owner me')
         self.assertIn("TASK-0001", result.text)
-        self.assertEqual(self.service.get_task("TASK-0001")["name"], "演示任务")
+        self.assertEqual(self.service.get_task("TASK-0001")["name"], "Demo task")
 
     def test_invalid_date_returns_helpful_reply(self) -> None:
-        result = self.handle("新增任务“演示任务”，由我负责，截止2月30日")
-        self.assertIn("截止时间无效", result.text)
+        result = self.handle('create task "Demo task", owner me, due 02-30')
+        self.assertIn("due date is invalid", result.text)
         self.assertEqual(self.service.list_tasks(), [])
 
     def test_short_date_rolls_into_next_year_when_needed(self) -> None:
         reference = datetime(2026, 12, 31, 9, 0, tzinfo=ZoneInfo("Asia/Tokyo"))
         result = self.processor.handle(
-            "新增任务“跨年任务”，由我负责，截止1月2日",
+            'create task "Year boundary", owner me, due 01-02',
             actor_id=ALICE,
             reference=reference,
         )
@@ -63,44 +63,44 @@ class CommandProcessorTest(unittest.TestCase):
         )
 
     def test_create_for_registered_member_and_update_stage(self) -> None:
-        created = self.handle("创建任务“示例检查”，负责人是Bob，截止2026-10-20 16:30")
-        self.assertIn("负责人：Bob", created.text)
-        updated = self.handle("更新 TASK-0001，阶段改为审核")
-        self.assertIn("阶段：审核", updated.text)
+        created = self.handle('create task "Example review", owner Bob, due 2026-10-20 16:30')
+        self.assertIn("Owner: Bob", created.text)
+        updated = self.handle("update TASK-0001, stage review")
+        self.assertIn("Stage: review", updated.text)
 
     def test_complete_cancel_and_query(self) -> None:
-        self.handle("新增任务“任务一”，由我负责")
-        listing = self.handle("查询当前任务")
-        self.assertIn("任务一", listing.text)
-        completed = self.handle("TASK-0001 已完成")
-        self.assertIn("状态：已完成", completed.text)
-        self.assertIn("当前没有", self.handle("查询任务").text)
+        self.handle('create task "Task one", owner me')
+        listing = self.handle("list current tasks")
+        self.assertIn("Task one", listing.text)
+        completed = self.handle("complete TASK-0001")
+        self.assertIn("Status: completed", completed.text)
+        self.assertIn("no active tasks", self.handle("list tasks").text)
 
-        self.handle("新增任务“任务二”，由我负责")
-        cancelled = self.handle("取消 TASK-0002")
-        self.assertIn("状态：已取消", cancelled.text)
+        self.handle('create task "Task two", owner me')
+        cancelled = self.handle("cancel TASK-0002")
+        self.assertIn("Status: cancelled", cancelled.text)
 
     def test_unknown_member_and_unrelated_text(self) -> None:
-        unknown = self.handle("查询任务", actor="U_EXAMPLE_UNKNOWN")
-        self.assertIn("还不是已登记", unknown.text)
-        self.assertFalse(self.handle("今天天气很好").handled)
+        unknown = self.handle("list tasks", actor="U_EXAMPLE_UNKNOWN")
+        self.assertIn("not a registered", unknown.text)
+        self.assertFalse(self.handle("The weather is nice").handled)
 
     def test_unrelated_member_cannot_modify_task(self) -> None:
-        self.handle("新增任务“任务一”，由我负责")
-        result = self.handle("TASK-0001 已完成", actor="U_EXAMPLE_CAROL")
-        self.assertIn("没有权限", result.text)
+        self.handle('create task "Task one", owner me')
+        result = self.handle("complete TASK-0001", actor="U_EXAMPLE_CAROL")
+        self.assertIn("do not have permission", result.text)
         self.assertEqual(self.service.get_task("TASK-0001")["status"], "open")
 
     def test_long_task_list_stays_within_one_line_message_limit(self) -> None:
         for index in range(30):
             self.service.create_task(
-                name=f"任务{index}-" + "示例" * 70,
+                name=f"Task {index}-" + "example" * 25,
                 created_by=ALICE,
                 owner_id=ALICE,
             )
-        result = self.handle("查询任务")
+        result = self.handle("list tasks")
         self.assertLessEqual(len(result.text), 5000)
-        self.assertIn("未显示", result.text)
+        self.assertIn("not shown", result.text)
 
 
 if __name__ == "__main__":

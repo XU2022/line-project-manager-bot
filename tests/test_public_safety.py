@@ -42,6 +42,24 @@ class PublicSafetyTest(unittest.TestCase):
                     violations.append(f"{path.relative_to(ROOT)}: {label}")
         self.assertEqual(violations, [])
 
+    def test_public_text_and_file_names_are_english_only(self) -> None:
+        cjk = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff]")
+        violations: list[str] = []
+        for path in ROOT.rglob("*"):
+            if ".git" in path.parts or "__pycache__" in path.parts:
+                continue
+            relative = str(path.relative_to(ROOT))
+            if cjk.search(relative):
+                violations.append(f"{relative}: file name")
+                continue
+            if not path.is_file():
+                continue
+            if path.suffix not in TEXT_SUFFIXES and path.name not in {"README.md", ".gitignore"}:
+                continue
+            if cjk.search(path.read_text(encoding="utf-8", errors="ignore")):
+                violations.append(f"{relative}: content")
+        self.assertEqual(violations, [])
+
 
 if __name__ == "__main__":
     unittest.main()

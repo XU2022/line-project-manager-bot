@@ -6,9 +6,11 @@ import sqlite3
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
+from types import ModuleType
 from zoneinfo import ZoneInfo
 
 from .line_gateway import LineApiError
+from .locales import en as english_messages
 
 
 @dataclass(frozen=True)
@@ -90,6 +92,7 @@ class ReminderRunner:
         reminder_hour: int = 12,
         monthly_budget: int = 200,
         estimated_push_cost: int = 1,
+        messages: ModuleType = english_messages,
     ):
         self.database = database
         self.push_client = push_client
@@ -98,6 +101,7 @@ class ReminderRunner:
         self.reminder_hour = reminder_hour
         self.monthly_budget = monthly_budget
         self.estimated_push_cost = estimated_push_cost
+        self.messages = messages
 
     def run(self, now: datetime) -> dict[str, int]:
         with self.database.session() as connection:
@@ -128,9 +132,8 @@ class ReminderRunner:
                 result["skipped"] += 1
                 continue
             retry_key = str(uuid.uuid5(uuid.NAMESPACE_URL, self._dispatch_key(candidate)))
-            text = (
-                f"，任务 {candidate.task_id}“{candidate.task_name}”将在明天截止，"
-                "请确认当前进度。"
+            text = self.messages.REMINDER.format(
+                task_id=candidate.task_id, task_name=candidate.task_name
             )
             try:
                 self.push_client.push_reminder(

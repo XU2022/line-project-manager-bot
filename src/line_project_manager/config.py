@@ -39,6 +39,7 @@ class RuntimeConfig:
     estimated_push_cost: int = 1
     bootstrap_mode: bool = False
     fallback_trigger_letter: str = "H"
+    bot_locale: str = "en"
 
     @classmethod
     def from_env(cls, environment: Mapping[str, str] | None = None) -> "RuntimeConfig":
@@ -94,6 +95,9 @@ class RuntimeConfig:
             raise ConfigError(
                 "LINE_FALLBACK_TRIGGER_LETTER must be one ASCII letter"
             )
+        bot_locale = env.get("BOT_LOCALE", "en").strip().lower().replace("-", "_")
+        if not bot_locale or not bot_locale.replace("_", "").isalnum():
+            raise ConfigError("BOT_LOCALE must be a locale module name such as en")
         return cls(
             channel_secret=required["LINE_CHANNEL_SECRET"],
             channel_access_token=required["LINE_CHANNEL_ACCESS_TOKEN"],
@@ -110,6 +114,7 @@ class RuntimeConfig:
             estimated_push_cost=estimated_push_cost,
             bootstrap_mode=bootstrap_mode,
             fallback_trigger_letter=fallback_trigger_letter.upper(),
+            bot_locale=bot_locale,
         )
 
 

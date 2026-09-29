@@ -58,19 +58,19 @@ class LineGatewayTest(unittest.TestCase):
         )
 
     def test_prefix_at_start_is_accepted_and_removed(self) -> None:
-        accepted = self.accept(body_for(" H：新增任务 Demo"))
+        accepted = self.accept(body_for(" H: create task Demo"))
         self.assertEqual(len(accepted), 1)
-        self.assertEqual(accepted[0].text, "新增任务 Demo")
+        self.assertEqual(accepted[0].text, "create task Demo")
         self.assertEqual(accepted[0].trigger, "fallback_prefix")
 
     def test_prefix_in_middle_is_not_a_trigger(self) -> None:
-        self.assertEqual(self.accept(body_for("聊天内容 H：新增任务 Demo")), [])
+        self.assertEqual(self.accept(body_for("chat message H: create task Demo")), [])
 
     def test_structured_self_mention_is_accepted(self) -> None:
-        accepted = self.accept(body_for("@ExampleBot 新增任务 Demo", mention=True))
+        accepted = self.accept(body_for("@ExampleBot create task Demo", mention=True))
         self.assertEqual(len(accepted), 1)
         self.assertEqual(accepted[0].trigger, "mention")
-        self.assertEqual(accepted[0].text, "新增任务 Demo")
+        self.assertEqual(accepted[0].text, "create task Demo")
 
     def test_custom_fallback_letter_replaces_default(self) -> None:
         self.config = GateConfig.create(
@@ -78,14 +78,14 @@ class LineGatewayTest(unittest.TestCase):
             allowed_member_ids=[MEMBER],
             fallback_trigger_letter="P",
         )
-        accepted = self.accept(body_for("p：查询当前任务"))
+        accepted = self.accept(body_for("p: list tasks"))
         self.assertEqual(len(accepted), 1)
-        self.assertEqual(accepted[0].text, "查询当前任务")
+        self.assertEqual(accepted[0].text, "list tasks")
         self.assertEqual(accepted[0].trigger, "fallback_prefix")
-        self.assertEqual(self.accept(body_for("H：查询当前任务")), [])
+        self.assertEqual(self.accept(body_for("H: list tasks")), [])
 
     def test_mention_has_priority_over_fallback_prefix(self) -> None:
-        accepted = self.accept(body_for("@ExampleBot 查询当前任务", mention=True))
+        accepted = self.accept(body_for("@ExampleBot list tasks", mention=True))
         self.assertEqual(accepted[0].trigger, "mention")
 
     def test_invalid_fallback_letter_is_rejected(self) -> None:

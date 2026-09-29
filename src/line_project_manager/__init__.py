@@ -2,7 +2,7 @@
 
 from .application import BotApplication, ReplyInstruction
 from .database import Database
-from .commands import CommandProcessor, CommandResult
+from .command_processor import CommandProcessor, CommandResult
 from .line_gateway import (
     AcceptedMessage,
     GateConfig,

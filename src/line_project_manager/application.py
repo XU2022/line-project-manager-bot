@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from types import ModuleType
 from zoneinfo import ZoneInfo
 
-from .commands import CommandProcessor
+from .command_processor import CommandProcessor
+from .locales import en as english_messages
 from .database import Database
 from .line_gateway import GateConfig, accepted_messages
 
@@ -28,6 +30,7 @@ class BotApplication:
         channel_secret: str,
         timezone: str = "Asia/Tokyo",
         bootstrap_mode: bool = False,
+        messages: ModuleType = english_messages,
     ):
         self.database = database
         self.command_processor = command_processor
@@ -35,6 +38,7 @@ class BotApplication:
         self.channel_secret = channel_secret
         self.timezone = ZoneInfo(timezone)
         self.bootstrap_mode = bootstrap_mode
+        self.messages = messages
 
     def process_webhook(
         self, raw_body: bytes, signature: str, *, reference: datetime | None = None
@@ -50,14 +54,12 @@ class BotApplication:
             if not self._claim_event(message.event_id, now):
                 continue
             if self.bootstrap_mode:
-                if message.text.strip() in {"身份", "查看身份", "identity"}:
-                    text = (
-                        f"群组ID：{message.group_id}\n"
-                        f"成员ID：{message.member_id}\n"
-                        "请保存到服务器的本地配置，随后关闭引导模式。"
+                if message.text.strip().lower() in {"identity", "show identity"}:
+                    text = self.messages.BOOTSTRAP_INFO.format(
+                        group_id=message.group_id, member_id=message.member_id
                     )
                 else:
-                    text = "当前处于引导模式，只接受“身份”命令。"
+                    text = self.messages.BOOTSTRAP_ONLY
                 replies.append(
                     ReplyInstruction(
                         reply_token=message.reply_token,
@@ -70,7 +72,7 @@ class BotApplication:
                 message.text, actor_id=message.member_id, reference=now
             )
             if not result.handled:
-                text = "没有识别到任务操作。可以使用：新增任务、更新任务、完成、取消或查询任务。"
+                text = self.messages.UNKNOWN_OPERATION
             else:
                 text = result.text
             if text:
