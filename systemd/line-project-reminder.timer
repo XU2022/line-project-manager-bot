@@ -1,0 +1,11 @@
+[Unit]
+Description=Run LINE Project Manager reminder scan daily
+
+[Timer]
+OnCalendar=*-*-* 12:00:00 Asia/Tokyo
+Persistent=true
+RandomizedDelaySec=30
+Unit=line-project-reminder.service
+
+[Install]
+WantedBy=timers.target

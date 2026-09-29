@@ -1,0 +1,17 @@
+[Unit]
+Description=LINE Project Manager reminder scan
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=linebot
+Group=linebot
+WorkingDirectory=/opt/line-project-manager
+EnvironmentFile=/etc/line-project-manager.env
+ExecStart=/opt/line-project-manager/venv/bin/line-project-reminder
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/line-project-manager/state

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "line-project-manager-bot"
+version = "0.1.0"
+description = "A privacy-conscious project management bot core for LINE groups"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "XU2022"}]
+keywords = ["line", "bot", "project-management", "webhook", "sqlite"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/XU2022/line-project-manager-bot"
+Repository = "https://github.com/XU2022/line-project-manager-bot"
+Issues = "https://github.com/XU2022/line-project-manager-bot/issues"
+
+[project.scripts]
+line-project-bot = "line_project_manager.server:main"
+line-project-init = "line_project_manager.setup_cli:main"
+line-project-reminder = "line_project_manager.reminder_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+line_project_manager = ["schema.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

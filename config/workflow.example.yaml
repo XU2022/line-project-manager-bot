@@ -1,0 +1,16 @@
+workflow:
+  name: example-workflow
+  stages:
+    - planning
+    - execution
+    - review
+    - delivery
+
+reminder:
+  previous_day_at: "12:00"
+
+permissions:
+  create: member
+  update: owner_or_creator_or_admin
+  cancel: owner_or_creator_or_admin
+  configure: admin

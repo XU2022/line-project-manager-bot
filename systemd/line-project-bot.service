@@ -1,0 +1,22 @@
+[Unit]
+Description=LINE Project Manager webhook service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=linebot
+Group=linebot
+WorkingDirectory=/opt/line-project-manager
+EnvironmentFile=/etc/line-project-manager.env
+ExecStart=/opt/line-project-manager/venv/bin/line-project-bot
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/line-project-manager/state
+
+[Install]
+WantedBy=multi-user.target

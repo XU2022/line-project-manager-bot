@@ -1,0 +1,16 @@
+{
+  "members": {
+    "U_EXAMPLE_ALICE": {
+      "display_name": "Alice",
+      "roles": ["admin", "contributor"]
+    },
+    "U_EXAMPLE_BOB": {
+      "display_name": "Bob",
+      "roles": ["reviewer"]
+    },
+    "U_EXAMPLE_CAROL": {
+      "display_name": "Carol",
+      "roles": ["contributor"]
+    }
+  }
+}
