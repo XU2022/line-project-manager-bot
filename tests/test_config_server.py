@@ -37,12 +37,26 @@ class ConfigAndServerTest(unittest.TestCase):
                 "PROJECT_DB_PATH": "/tmp/example/tasks.sqlite3",
                 "MEMBER_CONFIG_PATH": "/tmp/example/members.json",
                 "LINE_PORT": "9000",
+                "LINE_FALLBACK_TRIGGER_LETTER": "p",
             }
         )
         self.assertEqual(config.allowed_group_ids, ("C_EXAMPLE_ONE", "C_EXAMPLE_TWO"))
         self.assertEqual(config.port, 9000)
+        self.assertEqual(config.fallback_trigger_letter, "P")
         self.assertNotIn("secret", repr(config))
         self.assertNotIn("token", repr(config))
+
+    def test_fallback_trigger_must_be_one_ascii_letter(self) -> None:
+        base = {
+            "LINE_CHANNEL_SECRET": "secret",
+            "LINE_CHANNEL_ACCESS_TOKEN": "token",
+            "LINE_ALLOWED_GROUPS": "C_EXAMPLE_GROUP",
+            "PROJECT_DB_PATH": "/tmp/example/tasks.sqlite3",
+            "MEMBER_CONFIG_PATH": "/tmp/example/members.json",
+            "LINE_FALLBACK_TRIGGER_LETTER": "任务",
+        }
+        with self.assertRaises(ConfigError):
+            RuntimeConfig.from_env(base)
 
     def test_wildcard_group_requires_explicit_bootstrap_mode(self) -> None:
         base = {

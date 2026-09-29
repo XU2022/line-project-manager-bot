@@ -31,11 +31,13 @@ LINE_REMINDER_GROUP_ID=*
 LINE_BOOTSTRAP_MODE=true
 ```
 
-只启动`line-project-bot`，不要启用提醒timer。每位准备加入项目的成员在群里发送：
+只启动`line-project-bot`，不要启用提醒timer。每位准备加入项目的成员在群里真实提及机器人并发送：
 
 ```text
-H：身份
+@机器人 身份
 ```
+
+如果客户端无法提及机器人，也可以使用环境文件中配置的备用字母，例如`H：身份`。
 
 机器人会在群内回复当前群组ID和发言者成员ID。ID会出现在群聊中，因此只应在受信任的测试群或项目群内进行。
 

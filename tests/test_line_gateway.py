@@ -61,7 +61,7 @@ class LineGatewayTest(unittest.TestCase):
         accepted = self.accept(body_for(" H：新增任务 Demo"))
         self.assertEqual(len(accepted), 1)
         self.assertEqual(accepted[0].text, "新增任务 Demo")
-        self.assertEqual(accepted[0].trigger, "prefix")
+        self.assertEqual(accepted[0].trigger, "fallback_prefix")
 
     def test_prefix_in_middle_is_not_a_trigger(self) -> None:
         self.assertEqual(self.accept(body_for("聊天内容 H：新增任务 Demo")), [])
@@ -71,6 +71,28 @@ class LineGatewayTest(unittest.TestCase):
         self.assertEqual(len(accepted), 1)
         self.assertEqual(accepted[0].trigger, "mention")
         self.assertEqual(accepted[0].text, "新增任务 Demo")
+
+    def test_custom_fallback_letter_replaces_default(self) -> None:
+        self.config = GateConfig.create(
+            allowed_group_ids=[GROUP],
+            allowed_member_ids=[MEMBER],
+            fallback_trigger_letter="P",
+        )
+        accepted = self.accept(body_for("p：查询当前任务"))
+        self.assertEqual(len(accepted), 1)
+        self.assertEqual(accepted[0].text, "查询当前任务")
+        self.assertEqual(accepted[0].trigger, "fallback_prefix")
+        self.assertEqual(self.accept(body_for("H：查询当前任务")), [])
+
+    def test_mention_has_priority_over_fallback_prefix(self) -> None:
+        accepted = self.accept(body_for("@ExampleBot 查询当前任务", mention=True))
+        self.assertEqual(accepted[0].trigger, "mention")
+
+    def test_invalid_fallback_letter_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            GateConfig.create(
+                allowed_group_ids=[GROUP], fallback_trigger_letter="TASK"
+            )
 
     def test_ordinary_chat_and_other_group_are_ignored(self) -> None:
         self.assertEqual(self.accept(body_for("ordinary chat")), [])

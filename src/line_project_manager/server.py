@@ -49,6 +49,7 @@ def build_service(config: RuntimeConfig) -> WebhookService:
             allowed_member_ids=(
                 [] if config.bootstrap_mode else [member.member_id for member in members]
             ),
+            fallback_trigger_letter=config.fallback_trigger_letter,
         ),
         channel_secret=config.channel_secret,
         timezone=config.timezone,

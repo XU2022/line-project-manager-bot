@@ -39,10 +39,17 @@ class GateConfig:
         *,
         allowed_group_ids: Iterable[str],
         allowed_member_ids: Iterable[str] = (),
+        fallback_trigger_letter: str = "H",
     ) -> "GateConfig":
+        letter = fallback_trigger_letter.strip()
+        if len(letter) != 1 or not letter.isascii() or not letter.isalpha():
+            raise ValueError("fallback trigger must be one ASCII letter")
+        upper = letter.upper()
+        lower = letter.lower()
         return cls(
             allowed_group_ids=frozenset(allowed_group_ids),
             allowed_member_ids=frozenset(allowed_member_ids),
+            command_prefixes=(f"{upper}:", f"{upper}：", f"{lower}:", f"{lower}："),
         )
 
 
@@ -137,13 +144,14 @@ def accepted_messages(
             continue
 
         text = message.get("text", "")
-        command_text = _prefixed_text(text, config.command_prefixes)
-        trigger = "prefix"
-        if command_text is None:
-            if not config.allow_bot_mention or not _has_self_mention(message):
-                continue
+        if config.allow_bot_mention and _has_self_mention(message):
             command_text = _without_self_mentions(message, text)
             trigger = "mention"
+        else:
+            command_text = _prefixed_text(text, config.command_prefixes)
+            trigger = "fallback_prefix"
+            if command_text is None:
+                continue
         if not command_text:
             continue
 

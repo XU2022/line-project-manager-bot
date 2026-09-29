@@ -3,7 +3,7 @@
 ## 0.1.0 - 2026-09-29
 
 - Added LINE webhook signature verification and group/member allowlists.
-- Added explicit `H:` and structured bot-mention gates.
+- Added structured bot mentions as the primary gate and a configurable single-letter fallback.
 - Added generic SQLite task, member, event, and reminder storage.
 - Added deterministic task create, update, complete, cancel, and query commands.
 - Added previous-day reminder Push with deduplication and quota protection.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
@@ -37,6 +38,7 @@ class RuntimeConfig:
     monthly_message_limit: int = 200
     estimated_push_cost: int = 1
     bootstrap_mode: bool = False
+    fallback_trigger_letter: str = "H"
 
     @classmethod
     def from_env(cls, environment: Mapping[str, str] | None = None) -> "RuntimeConfig":
@@ -87,6 +89,11 @@ class RuntimeConfig:
         reminder_group = env.get("LINE_REMINDER_GROUP_ID", "").strip() or groups[0]
         if reminder_group not in groups:
             raise ConfigError("LINE_REMINDER_GROUP_ID must be an allowed group")
+        fallback_trigger_letter = env.get("LINE_FALLBACK_TRIGGER_LETTER", "H").strip()
+        if not re.fullmatch(r"[A-Za-z]", fallback_trigger_letter):
+            raise ConfigError(
+                "LINE_FALLBACK_TRIGGER_LETTER must be one ASCII letter"
+            )
         return cls(
             channel_secret=required["LINE_CHANNEL_SECRET"],
             channel_access_token=required["LINE_CHANNEL_ACCESS_TOKEN"],
@@ -102,6 +109,7 @@ class RuntimeConfig:
             monthly_message_limit=monthly_message_limit,
             estimated_push_cost=estimated_push_cost,
             bootstrap_mode=bootstrap_mode,
+            fallback_trigger_letter=fallback_trigger_letter.upper(),
         )
 
 
